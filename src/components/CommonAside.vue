@@ -10,7 +10,7 @@
       text-color="#fff"
       active-text-color="#ffd04b"
     >
-      <h3>{{ isCollapse() ? '后台' : '通用后台管理系统' }}</h3>
+      <h3>{{ isCollapse() ? '后台' : '家校通管理系统' }}</h3>
 
       <!--无子导航-->
       <el-menu-item @click="clickMenu(item)" v-for="item in noChildren()" :index="item.name">
@@ -68,9 +68,9 @@ export default {
           url: 'Home/Home',
         },
         {
-          path: '/mall',
-          name: 'mall',
-          label: '商品管理',
+          path: '/message',
+          name: 'message',
+          label: '站内信息',
           icon: 'video-play',
           url: 'MallManage/MallManage',
         },
@@ -82,26 +82,46 @@ export default {
           url: 'UserManage/UserManage',
         },
         {
-          label: '其他',
-          name: 'other',
+          path: '/role',
+          name: 'role',
+          label: '教师注册请求审核管理',
+          icon: 'user',
+          url: 'RoleManagement/RoleManagement',
+        },
+        {
+          path: '/classNoticeManagement',
+          name: 'classNoticeManagement',
+          label: '班级申请审核管理',
           icon: 'location',
-          path: '/other',
-          children: [
-            {
-              path: '/other/page1',
-              name: 'page1',
-              label: '其他1',
-              icon: 'setting',
-              url: 'Other/PageOne',
-            },
-            {
-              path: '/other/page2',
-              name: 'page2',
-              label: '其他2',
-              icon: 'setting',
-              url: 'Other/PageTwo',
-            },
-          ],
+          url: 'classNoticeManagement/classNoticeManagement',
+        },
+        {
+          path: '/systemNotice',
+          name: 'systemNotice',
+          label: '系统消息发布',
+          icon: 'location',
+          url: 'systemNotice/systemNotice',
+        },
+        {
+          path: '/classManagement',
+          name: 'classManagement',
+          label: '班级管理',
+          icon: 'location',
+          url: 'classManagement/classManagement',
+        },
+        {
+          path: '/classRequest',
+          name: 'classRequest',
+          label: '加入班级请求管理',
+          icon: 'location',
+          url: 'classRequest/classRequest',
+        },
+        {
+          path: '/classNotice',
+          name: 'classNotice',
+          label: '班级通知',
+          icon: 'location',
+          url: 'classNotice/classNotice',
         },
       ],
     };

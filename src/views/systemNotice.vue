@@ -5,87 +5,36 @@
     <p v-if="errorCode === '502'">{{ errorMessage }}</p>
     <p v-else-if="userList.length === 0">No users available.</p>
 
-    <el-input
-      v-model="sender"
-      placeholder="发送方"
-      style="width: 200px;"
-    ></el-input>
-    <el-input
-      v-model="recipient"
-      placeholder="接收方"
-      style="width: 200px;"
-    ></el-input>
-    <el-input
-      v-model="classId"
-      placeholder="班级ID"
-      style="width: 200px;"
-    ></el-input>
-    <el-input
-      v-model="messageTitle"
-      placeholder="消息标题"
-      style="width: 200px;"
-    ></el-input>
-    <el-input
-      v-model="messageContent"
-      placeholder="消息内容"
-      style="width: 200px;"
-    ></el-input>
-    <el-input
-      v-model="day"
-      placeholder="过去多少天"
-      style="width: 200px;"
-    ></el-input>
-    <el-input
-      v-model="isRead"
-      placeholder="已读状态"
-      style="width: 200px;"
-    ></el-input>
-
-    <!-- 搜索按钮 -->
-    <el-button type="primary" @click="handleCheck">搜索</el-button>
-    <el-button type="primary" @click="handleExit">取消</el-button>
-
-    <div class="pagination-container" v-if='!isSearch'>
-      收到的信息：
-    </div>
     <!-- el-table 只有在 userList 不为空时才渲染 -->
-    <div style="max-height: 200px; overflow: auto;">
     <el-table
       v-if="userList.length > 0"
       :data="filteredUserList"
       border
+      style="width: 100%"
     >
       <el-table-column
-        prop="sender"
-        label="发送方"
+        prop="systemNoticeId"
+        label="系统通知编号"
       ></el-table-column>
       <el-table-column
-        prop="recipient"
-        label="接收方"
+        prop="systemNoticeAuthor"
+        label="作者姓名"
       ></el-table-column>
       <el-table-column
-        prop="isRead"
-        label="是否已读"
+        prop="systemNoticeContent"
+        label="通知内容"
       ></el-table-column>
       <el-table-column
-        prop="messageId"
-        label="信息编号"
+        prop="systemNoticeTime"
+        label="发布时间"
       ></el-table-column>
       <el-table-column
-        prop="messageTitle"
-        label="信息标题"
+        prop="systemNoticeTheme"
+        label="通知主题"
       ></el-table-column>
       <el-table-column
-        prop="className"
-        label="班级名称"
-      ></el-table-column>
-      <el-table-column
-        prop="messageContent"
-        label="消息内容"
-      ></el-table-column>
-      <el-table-column
-        prop="sendTime"
-        label="发送时间"
+        prop="systemNoticeTitle"
+        label="通知标题"
       ></el-table-column>
       <el-table-column
         fixed="right"
@@ -99,12 +48,12 @@
         </template>
         <template slot-scope="scope">
           <el-button
-            v-if='scope.row.isRead===1'
             size="mini"
             @click="handleEdit(scope.$index, scope.row)"
-          >已读</el-button>
+          >查看</el-button>
           <!-- 显示删除按钮 -->
           <el-button
+            v-if='(String(roleList) === String(1))'
             size="mini"
             type="danger"
             @click="handleConfirmDelete(scope.$index, scope.row)"
@@ -113,101 +62,41 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <div class="pagination-container" v-if="userList.length !== 0">
+      <!-- 上一页按钮 -->
+      <el-button @click="prevPage" :disabled="currentPage === 1">上一页</el-button>
+      <!-- 当前页和总页数显示 -->
+      <span>当前页：{{ currentPage }}</span>
+      <!-- 下一页按钮 -->
+      <el-button @click="nextPage" :disabled="isNextPageDisabled">下一页</el-button>
+      <!-- 输入页码跳转 -->
+      <el-input type="number" v-model="inputPage" />
+      <el-button @click="goToPage">跳转</el-button>
     </div>
 
-
-
-    <div class="pagination-container" v-if='!isSearch'>
-      发送的信息：
-    </div>
-
-    <div style="max-height: 200px; overflow: auto;">
-    <el-table
-      v-if="inlist.length > 0&&!isSearch"
-      :data="inlist"
-      border
-    >
-      <el-table-column
-        prop="sender"
-        label="发送方"
-      ></el-table-column>
-      <el-table-column
-        prop="recipient"
-        label="接收方"
-      ></el-table-column>
-      <el-table-column
-        prop="isRead"
-        label="是否已读"
-      ></el-table-column>
-      <el-table-column
-        prop="messageId"
-        label="信息编号"
-      ></el-table-column>
-      <el-table-column
-        prop="messageTitle"
-        label="信息标题"
-      ></el-table-column>
-      <el-table-column
-        prop="className"
-        label="班级名称"
-      ></el-table-column>
-      <el-table-column
-        prop="messageContent"
-        label="消息内容"
-      ></el-table-column>
-      <el-table-column
-        prop="sendTime"
-        label="发送时间"
-      ></el-table-column>
-      <el-table-column
-        fixed="right"
-      >
-        <template slot="header" slot-scope="scope">
-          <el-input
-            v-model="search"
-            size="mini"
-            placeholder="输入关键字搜索"
-          />
-        </template>
-        <template slot-scope="scope">
-          <el-button
-            v-if='scope.row.isRead===1'
-            size="mini"
-            @click="handleEdit(scope.$index, scope.row)"
-          >已读</el-button>
-          <!-- 显示删除按钮 -->
-          <el-button
-            size="mini"
-            type="danger"
-            @click="handleConfirmDelete(scope.$index, scope.row)"
-          >删除</el-button>
-
-        </template>
-      </el-table-column>
-    </el-table>
-  </div>
 
     <!-- 添加用户按钮 -->
-<!--    <el-button type="primary" @click="handleAddUser" >发送消息</el-button>-->
+    <el-button type="primary" @click="handleAddUser" v-if='userInfo===1'>创建系统通知</el-button>
 
     <!-- 添加用户对话框 -->
     <el-dialog
-      title="发送信息"
+      title="添加系统通知"
       :visible="addDialogVisible"
       @close="handleCloseAddDialog"
     >
       <el-form :model="newUser" label-width="80px">
-        <el-form-item label="班级ID">
-          <el-input v-model="newUser.classId"></el-input>
+        <el-form-item label="通知标题">
+          <el-input v-model="newUser.systemNoticeTitle"></el-input>
         </el-form-item>
-        <el-form-item label="接收方">
-          <el-input v-model="newUser.recipient"></el-input>
+        <el-form-item label="通知作者">
+          <el-input v-model="newUser.systemNoticeAuthor"></el-input>
         </el-form-item>
-        <el-form-item label="消息标题">
-          <el-input v-model="newUser.messageTitle"></el-input>
+        <el-form-item label="通知主题">
+          <el-input v-model="newUser.systemNoticeTheme"></el-input>
         </el-form-item>
-        <el-form-item label="消息内容">
-          <el-input v-model="newUser.messageContent"></el-input>
+        <el-form-item label="通知内容">
+          <el-input v-model="newUser.systemNoticeContent"></el-input>
         </el-form-item>
         <!-- 其他需要添加的字段 -->
       </el-form>
@@ -220,24 +109,18 @@
       @close="handleCloseEditDialog"
     >
       <el-form :model="editedUser" label-width="80px">
-        <el-form-item label="班级的ID">
-          <el-input v-model="editedUser.classId" readonly></el-input>
-        </el-form-item>
-        <el-form-item label="班级的名称">
-          <el-input v-model="editedUser.className" readonly></el-input>
-        </el-form-item>
         <el-form-item label="作者姓名">
-          <el-input v-model="editedUser.classNoticeAuthor" readonly></el-input>
+          <el-input v-model="editedUser.systemNoticeAuthor" readonly></el-input>
         </el-form-item>
         <el-form-item label="通知标题">
-          <el-input v-model="editedUser.classNoticeTitle" readonly></el-input>
+          <el-input v-model="editedUser.systemNoticeTitle" readonly></el-input>
         </el-form-item>
         <el-form-item label="通知主题">
-          <el-input v-model="editedUser.classNoticeTheme" readonly></el-input>
+          <el-input v-model="editedUser.systemNoticeTheme" readonly></el-input>
         </el-form-item>
         <el-form-item label="通知内容">
           <el-input
-            v-model="editedUser.classNoticeContent"
+            v-model="editedUser.systemNoticeContent"
             type="textarea"
             :rows="4"
             readonly
@@ -255,7 +138,6 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      messageContent:'',
       userList: [], // 存储用户列表数据
       errorCode: null, // 存储错误代码
       errorMessage: null, // 存储错误消息
@@ -273,13 +155,11 @@ export default {
       myClass:false,
       userInfo:'',
       classIdToIsMemberMap:new Map(),
-      messageTitle:'',
-      recipient:'',
+      classNoticeAuthor:'',
+      classNoticeContent:'',
+      classNoticeTheme:'',
+      classNoticeTitle:'',
       day:'',
-      isRead:'',
-      inlist:[],
-      isSearch:false,
-      sender:''
     };
   },
   computed: {
@@ -288,10 +168,10 @@ export default {
     },
     // 计算属性，根据搜索关键字过滤用户列表
     filteredUserList() {
-      return this.userList;
-      // return this.userList.filter(user =>
-      //   user.classNoticeTitle.toLowerCase().includes(this.search.toLowerCase())
-      // );
+      // return this.userList;
+      return this.userList.filter(user =>
+        user.systemNoticeTitle.toLowerCase().includes(this.search.toLowerCase())
+      );
     },
   },
   mounted() {
@@ -300,42 +180,10 @@ export default {
     // this.isCreator();
   },
   methods: {
-    check(className){
-
-      return this.classIdToIsMemberMap.get(className)
-    },
-    handleExit(){
-      this.fetchUserInfoAndUserList();
-      this.recipient=this.classId=this.messageContent=this.messageTitle=this.isRead=this.sender=this.day=''
-      this.isSearch=false
-    },
-    async handleCheck() {
-      this.isSearch=true
-      if(this.sender===''&&this.recipient!=='')this.sender=this.userInfo
-      if(this.sender!==''&&this.recipient==='')this.recipient=this.userInfo
-      const responseInfo = await axios.post('http://localhost:8080/searchMessage', {
-        username: this.recipient,
-        classId: this.classId,
-        messageTitle: this.messageTitle,
-        messageContent: this.messageContent,
-        isRead: this.isRead,
-        sender:this.sender,
-        day:this.day
-      }, {
-        withCredentials: true,
-      });
-      console.log()
-      console.log(responseInfo)
-      this.userList=responseInfo.data.info.list;
-    },
-    async handleEdit(index, row) {
+    handleEdit(index, row) {
       // 处理编辑按钮点击事件
       this.editedUser = { ...row }; // 克隆用户信息，避免直接修改原始数据
-      // this.editDialogVisible = true; // 显示编辑框
-      const responseList = await axios.get('http://localhost:8080/updateMessage/' + row.messageId, {
-        withCredentials: true,
-      });
-      await this.fetchUserInfoAndUserList()
+      this.editDialogVisible = true; // 显示编辑框
     },
     handleCloseEditDialog() {
       // 关闭编辑框时重置编辑状态
@@ -353,27 +201,14 @@ export default {
         this.roleList=responseInfo.data.info.userPermission.roleId;
 
         // 发送 GET 请求获取用户列表数据
-        const responseList = await axios.get('http://localhost:8080/message/listInbox/'+this.userInfo, {
+        const responseList = await axios.get('http://localhost:8080/systemNotice/list', {
           params: {
             pageNum: this.currentPage,
           },
           withCredentials: true,
         });
 
-        const responseList1 = await axios.get('http://localhost:8080/message/listOutbox/'+this.userInfo, {
-          params: {
-            pageNum: this.currentPage,
-          },
-          withCredentials: true,
-        });
-
-        if(responseList1.data.code==='100'){
-          this.inlist=responseList1.data.info.list;
-        }else {
-          // 权限不足或其他错误情况
-          this.errorCode = responseList1.data.code;
-          this.errorMessage = responseList1.data.msg;
-        }
+        console.log(responseList);
 
         // 根据返回的数据判断不同的情况
         if (responseList.data.code === '100') {
@@ -395,7 +230,7 @@ export default {
       if (this.currentPage > 1) {
         this.currentPage--;
       }
-      const responseList = await axios.get('http://localhost:8080/classNotice/list', {
+      const responseList = await axios.get('http://localhost:8080/systemNotice/list', {
         params: {
           pageNum: this.currentPage,
         },
@@ -417,7 +252,7 @@ export default {
     },
     // 下一页按钮点击事件
     async nextPage() {
-      const responseList = await axios.get('http://localhost:8080/classNotice/list', {
+      const responseList = await axios.get('http://localhost:8080/systemNotice/list', {
         params: {
           pageNum: this.currentPage+1,
         },
@@ -446,7 +281,7 @@ export default {
     // 跳转到输入的页码
     async goToPage() {
       const targetPage = parseInt(this.inputPage, 10);
-      const responseList = await axios.get('http://localhost:8080/classNotice/list', {
+      const responseList = await axios.get('http://localhost:8080/systemNotice/list', {
         params: {
           pageNum: targetPage,
         },
@@ -469,7 +304,7 @@ export default {
     },
     handleConfirmDelete(index, row) {
       // 弹出确认框
-      this.$confirm('确定删除该消息吗？', '提示', {
+      this.$confirm('确定删除该班级通知吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
@@ -482,35 +317,11 @@ export default {
       });
     },
 
-    async handleJoin(index, row) {
-      const response = await axios.post('http://localhost:8080/join/isDuplicate', {
-        memberId:this.userInfo,
-        classAdviser:row.classAdviser,
-        classId:row.classId
-      }, {
-        withCredentials: true,
-      });
-      console.log(response)
-      if(response.data.code==='100'&&response.data.info.result==='success'){
-        alert("你已申请加入班级，请勿重复操作")
-        return
-      }
-      const responseInfo = await axios.post('http://localhost:8080/addJoin', {
-        memberId:this.userInfo,
-        classAdviser:row.classAdviser,
-        classId:row.classId
-      }, {
-        withCredentials: true,
-      });
-      console.log(responseInfo)
-      alert("申请加入班级成功，等待班级创建者审核");
-    },
-
     // 处理确认删除的逻辑
     async confirmDelete(index, row) {
       try {
         // 发送请求删除用户信息
-        const response = await axios.get('http://localhost:8080/deleteMessage/'+row.messageId, {
+        const response = await axios.get('http://localhost:8080/systemNotice/delete/'+row.systemNoticeId, {
           withCredentials: true,
         });
         if (response.data.code === '100') {
@@ -544,8 +355,7 @@ export default {
       // 发送请求保存新添加的用户信息
       console.log(this.newUser)
       try{
-        this.newUser.sender=this.userInfo
-        const response = await axios.post('http://localhost:8080/sendMessage', this.newUser,
+        const response = await axios.post('http://localhost:8080/systemNotice/addSystemNotice', this.newUser,
           {
             withCredentials: true,
           }
@@ -553,14 +363,14 @@ export default {
         console.log(response)
         // 处理注册成功的情况
         if (response.data.code === '100' && response.data.info.result === 'success') {
-          alert("发送信息成功");
+          alert("添加班级通知成功");
         } else {
           // 处理注册失败的情况
-          alert('发送信息失败，请检查输入信息');
+          alert('添加班级通知失败，请检查输入信息');
         }
       } catch (error) {
-        console.error('发送信息失败:', error);
-        alert('发送信息，请稍后重试');
+        console.error('添加用户失败:', error);
+        alert('添加用户失败，请稍后重试');
       }
       // 成功后关闭添加用户对话框，并刷新用户列表等操作
       await this.fetchUserInfoAndUserList();

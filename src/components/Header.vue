@@ -1,5 +1,6 @@
 <script>
 import { mapState } from 'vuex';
+import axios from 'axios';
 
 export default {
   data() {
@@ -10,6 +11,14 @@ export default {
       console.log(this.$store);
       this.$store.commit('collapseMenu');
       console.log(this.$store);
+    },
+    async logout() {
+      // 处理退出逻辑，例如删除cookie等
+      const response2 = await axios.post('http://localhost:8080/login/logout', {}, {
+        withCredentials: true,
+      });
+      // 跳转到登录页面
+      this.$router.push('/login');
     },
   },
   computed: {
@@ -41,9 +50,7 @@ export default {
         <span class="el-dropdown-link"> 用户信息<i class="el-icon-arrow-down el-icon--right"></i> </span>
         <el-dropdown-menu slot="dropdown">
           <el-dropdown-item>个人中心</el-dropdown-item>
-          <el-dropdown-item>客服</el-dropdown-item>
-          <el-dropdown-item>会员</el-dropdown-item>
-          <el-dropdown-item>退出</el-dropdown-item>
+          <el-dropdown-item @click.native='logout'>退出</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
     </div>

@@ -12,28 +12,24 @@
       style="width: 100%"
     >
       <el-table-column
-        prop="userId"
-        label="编号"
+        prop="requestId"
+        label="请求ID"
       ></el-table-column>
       <el-table-column
-        prop="username"
-        label="用户名"
+        prop="requestTime"
+        label="请求日期"
       ></el-table-column>
       <el-table-column
-        prop="phone"
-        label="手机号"
+        prop="requestForm"
+        label="请求表单"
       ></el-table-column>
       <el-table-column
-        prop="nickname"
-        label="昵称"
+        prop="requestStatus"
+        label="请求状态"
       ></el-table-column>
       <el-table-column
-        prop="roleName"
-        label="用户权限"
-      ></el-table-column>
-      <el-table-column
-        prop="deleteStatus"
-        label="删除状态"
+        prop="requestType"
+        label="请求类型"
       ></el-table-column>
 
       <el-table-column
@@ -48,6 +44,7 @@
         </template>
         <template slot-scope="scope">
           <el-button
+            v-if='scope.row.requestStatus===1'
             size="mini"
             @click="handleEdit(scope.$index, scope.row)"
           >编辑</el-button>
@@ -74,59 +71,30 @@
 
     <!-- 编辑框 -->
     <el-dialog
-      title="编辑用户信息"
+      title="编辑班级申请信息"
       :visible="editDialogVisible"
       @close="handleCloseEditDialog"
     >
       <el-form :model="editedUser" label-width="80px">
-        <el-form-item label="手机号">
-          <el-input v-model="editedUser.phone"></el-input>
+        <el-form-item label="请求ID">
+          <el-input v-model="editedUser.requestId"></el-input>
         </el-form-item>
-        <el-form-item label="昵称">
-          <el-input v-model="editedUser.nickname"></el-input>
+        <el-form-item label="请求状态">
+          <el-input v-model="editedUser.requestStatus"></el-input>
         </el-form-item>
-        <el-form-item label="用户权限">
-          <el-select v-model="editedUser.roleId" placeholder="请选择用户权限">
-            <!-- 这里添加下拉框选项，可以从后端获取或者硬编码在前端 -->
-            <el-option
-              v-for="role in roleList"
-              :key="role.roleId"
-              :label="role.roleName"
-              :value="role.roleId"
-            ></el-option>
-          </el-select>
+        <el-form-item label="请求日期">
+          <el-input v-model="editedUser.requestTime"></el-input>
         </el-form-item>
-
-        <el-form-item label="删除状态">
-          <el-input v-model="editedUser.deleteStatus"></el-input>
+        <el-form-item label="请求类型">
+          <el-input v-model="editedUser.requestType"></el-input>
+        </el-form-item>
+        <el-form-item label="请求表单">
+          <el-input v-model="editedUser.requestForm"></el-input>
         </el-form-item>
         <!-- 其他需要编辑的字段 -->
       </el-form>
-      <el-button type="primary" @click="handleSaveEdit">保存</el-button>
-    </el-dialog>
-
-    <!-- 添加用户按钮 -->
-    <el-button type="primary" @click="handleAddUser" v-if='userInfo===1'>添加用户</el-button>
-
-    <!-- 添加用户对话框 -->
-    <el-dialog
-      title="添加用户"
-      :visible="addDialogVisible"
-      @close="handleCloseAddDialog"
-    >
-      <el-form :model="newUser" label-width="80px">
-        <el-form-item label="用户名">
-          <el-input v-model="newUser.username"></el-input>
-        </el-form-item>
-        <el-form-item label="手机号">
-          <el-input v-model="newUser.phone"></el-input>
-        </el-form-item>
-        <el-form-item label="昵称">
-          <el-input v-model="newUser.nickname"></el-input>
-        </el-form-item>
-        <!-- 其他需要添加的字段 -->
-      </el-form>
-      <el-button type="primary" @click="handleSaveAdd">保存</el-button>
+      <el-button type="primary" @click="handleSaveEdit">同意</el-button>
+      <el-button type="primary" @click="handleSaveEdit2">拒绝</el-button>
     </el-dialog>
   </div>
 </template>
@@ -144,20 +112,10 @@ export default {
       editDialogVisible: false, // 控制编辑框的显示与隐藏
       addDialogVisible: false, // 控制添加用户框的显示与隐藏
       editedUser: {}, // 存储正在编辑的用户信息
-      roleList: [],
-      newUser: {
-        username: '',
-        phone: '',
-        nickname: '',
-        deleteStatus: '1',
-        password:'123'
-        // 其他需要添加的字段
-      }, // 存储新添加的用户信息
       currentPage: 1, // 当前页数
       pageSize: 10, // 每页显示条数
       totalPages: 100, // 总页数
       inputPage: 1, // 输入的页码
-      userInfo:''
     };
   },
   computed: {
@@ -166,8 +124,9 @@ export default {
     },
     // 计算属性，根据搜索关键字过滤用户列表
     filteredUserList() {
+      // return this.userList;
       return this.userList.filter(user =>
-        user.username.toLowerCase().includes(this.search.toLowerCase())
+        user.requestForm.toLowerCase().includes(this.search.toLowerCase())
       );
     },
   },
@@ -175,30 +134,8 @@ export default {
 
     // 在组件挂载后先发送 POST 请求获取用户信息，再发送 GET 请求获取用户列表
     this.fetchUserInfoAndUserList();
-    this.fetchRoleList();
   },
   methods: {
-    async fetchRoleList() {
-      try {
-        // 发送请求获取用户权限列表
-        const response = await axios.get('http://localhost:8080/user/getAllRoles', {
-          withCredentials: true,
-        });
-        console.log(response)
-        // 根据返回的数据判断不同的情况
-        if (response.data.code === '100') {
-          // 用户权限列表获取成功
-          this.roleList = response.data.info.list;
-          console.log(response);
-        } else {
-          // 处理其他错误情况
-          console.error('Error fetching role list:', response.data.msg);
-        }
-      } catch (error) {
-        // 处理网络请求错误
-        console.error('Error fetching role list:', error);
-      }
-    },
     async fetchUserInfoAndUserList() {
       try {
         // 发送 POST 请求获取用户信息
@@ -206,28 +143,16 @@ export default {
           withCredentials: true,
         });
 
-        this.userInfo=responseInfo.data.info.userPermission.userId
-
-        // 从 localStorage 中获取存储的 cookie
-        const myAppAccessToken = localStorage.getItem('myAppAccessToken');
-        console.log(myAppAccessToken);
-
         // 发送 GET 请求获取用户列表数据
-        const responseList = await axios.get('http://localhost:8080/user/list', {
-          params: {
-            pageNum: this.currentPage,
-          },
+        const responseList = await axios.get('http://localhost:8080/request/listClass', {
           withCredentials: true,
         });
-
-        console.log(responseList);
 
         // 根据返回的数据判断不同的情况
         if (responseList.data.code === '100') {
           // 用户列表获取成功
           this.userList = responseList.data.info.list;
-          // this.currentPage=1;
-          console.log(responseList);
+          console.log(responseList)
         } else {
           // 权限不足或其他错误情况
           this.errorCode = responseList.data.code;
@@ -248,16 +173,43 @@ export default {
       this.editedUser = {};
       this.editDialogVisible = false;
     },
+    async handleSaveEdit2() {
+      try {
+        // 发送请求删除用户信息
+        console.log(this.editedUser)
+        this.editedUser.requestStatus = 3
+        const response = await axios.post('http://localhost:8080/request/updateRequestClass', this.editedUser, {
+          withCredentials: true,
+        });
+        if (response.data.code === '100') {
+          // 删除成功，可以进行其他操作，如刷新用户列表等
+          alert("审核班级成功");
+          console.log('User deletion successful');
+          await this.fetchUserInfoAndUserList();
+        } else {
+          // 删除失败，处理错误信息
+          console.error('User deletion failed:', response.data.msg);
+        }
+      } catch (error) {
+        // 处理请求错误
+        console.error('Error during user deletion:', error);
+      }
+      // 成功后关闭编辑框，并刷新用户列表等操作
+      this.editDialogVisible = false;
+    },
     async handleSaveEdit() {
       // 处理保存编辑内容的逻辑
       // 发送请求保存编辑后的用户信息
       try {
         // 发送请求删除用户信息
-        const response = await axios.post('http://localhost:8080/user/updateUser', this.editedUser, {
+        console.log(this.editedUser)
+        this.editedUser.requestStatus=2
+        const response = await axios.post('http://localhost:8080/request/updateRequestClass', this.editedUser, {
           withCredentials: true,
         });
         if (response.data.code === '100') {
           // 删除成功，可以进行其他操作，如刷新用户列表等
+          alert("审核班级成功");
           console.log('User deletion successful');
           await this.fetchUserInfoAndUserList();
         } else {
@@ -276,7 +228,7 @@ export default {
       if (this.currentPage > 1) {
         this.currentPage--;
       }
-      const responseList = await axios.get('http://localhost:8080/user/list', {
+      const responseList = await axios.get('http://localhost:8080/request/listClass', {
         params: {
           pageNum: this.currentPage,
         },
@@ -298,7 +250,7 @@ export default {
     },
     // 下一页按钮点击事件
     async nextPage() {
-      const responseList = await axios.get('http://localhost:8080/user/list', {
+      const responseList = await axios.get('http://localhost:8080/request/listClass', {
         params: {
           pageNum: this.currentPage+1,
         },
@@ -327,7 +279,7 @@ export default {
     // 跳转到输入的页码
     async goToPage() {
       const targetPage = parseInt(this.inputPage, 10);
-      const responseList = await axios.get('http://localhost:8080/user/list', {
+      const responseList = await axios.get('http://localhost:8080/request/listClass', {
         params: {
           pageNum: targetPage,
         },
@@ -367,13 +319,7 @@ export default {
     async confirmDelete(index, row) {
       try {
         // 发送请求删除用户信息
-        const response = await axios.post('http://localhost:8080/user/updateUser', {
-          userId: row.userId,
-          nickname:row.nickname,
-          roleId:row.roleId,
-          password:row.password,
-          deleteStatus:!row.deleteStatus
-        },{
+        const response = await axios.get('http://localhost:8080/request/deleteRequest/'+row.requestId, {
           withCredentials: true,
         });
         if (response.data.code === '100') {
@@ -388,39 +334,6 @@ export default {
         // 处理请求错误
         console.error('Error during user deletion:', error);
       }
-    },
-    handleAddUser() {
-      // 添加用户按钮点击事件
-      this.addDialogVisible = true; // 显示添加用户对话框
-    },
-    handleCloseAddDialog() {
-      // 关闭添加用户对话框时重置添加用户状态
-      this.newUser = {};
-      this.addDialogVisible = false;
-    },
-    async handleSaveAdd() {
-      // 处理保存添加用户内容的逻辑
-      // 发送请求保存新添加的用户信息
-      console.log(this.newUser)
-      try{
-      const response = await axios.post('http://localhost:8080/addUser', this.newUser);
-
-      // 处理注册成功的情况
-      if (response.data.code === '100' && response.data.info.result === 'success') {
-        alert("添加成功");
-        console.log(response)
-      } else {
-        // 处理注册失败的情况
-        alert('添加用户失败，请检查输入信息');
-      }
-    } catch (error) {
-      console.error('添加用户失败:', error);
-      alert('添加用户失败，请稍后重试');
-    }
-      // 成功后关闭添加用户对话框，并刷新用户列表等操作
-      await this.fetchUserInfoAndUserList();
-      this.addDialogVisible = false;
-      // 刷新用户列表等操作...
     },
   },
 };

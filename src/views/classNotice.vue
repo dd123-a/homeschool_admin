@@ -6,28 +6,28 @@
     <p v-else-if="userList.length === 0">No users available.</p>
 
     <el-input
-      v-model="sender"
-      placeholder="发送方"
-      style="width: 200px;"
-    ></el-input>
-    <el-input
-      v-model="recipient"
-      placeholder="接收方"
-      style="width: 200px;"
-    ></el-input>
-    <el-input
       v-model="classId"
       placeholder="班级ID"
       style="width: 200px;"
     ></el-input>
     <el-input
-      v-model="messageTitle"
-      placeholder="消息标题"
+      v-model="classNoticeTitle"
+      placeholder="通知标题"
       style="width: 200px;"
     ></el-input>
     <el-input
-      v-model="messageContent"
-      placeholder="消息内容"
+      v-model="classNoticeTheme"
+      placeholder="通知主题"
+      style="width: 200px;"
+    ></el-input>
+    <el-input
+      v-model="classNoticeAuthor"
+      placeholder="作者姓名"
+      style="width: 200px;"
+    ></el-input>
+    <el-input
+      v-model="classNoticeContent"
+      placeholder="通知内容"
       style="width: 200px;"
     ></el-input>
     <el-input
@@ -35,57 +35,48 @@
       placeholder="过去多少天"
       style="width: 200px;"
     ></el-input>
-    <el-input
-      v-model="isRead"
-      placeholder="已读状态"
-      style="width: 200px;"
-    ></el-input>
 
     <!-- 搜索按钮 -->
-    <el-button type="primary" @click="handleCheck">搜索</el-button>
+    <el-button type="primary" @click="handleCheck" class>搜索</el-button>
     <el-button type="primary" @click="handleExit">取消</el-button>
-
-    <div class="pagination-container" v-if='!isSearch'>
-      收到的信息：
-    </div>
     <!-- el-table 只有在 userList 不为空时才渲染 -->
-    <div style="max-height: 200px; overflow: auto;">
     <el-table
       v-if="userList.length > 0"
       :data="filteredUserList"
       border
+      style="width: 100%"
     >
       <el-table-column
-        prop="sender"
-        label="发送方"
+        prop="classId"
+        label="班级编号"
       ></el-table-column>
       <el-table-column
-        prop="recipient"
-        label="接收方"
+        prop="classNoticeAuthor"
+        label="作者姓名"
       ></el-table-column>
       <el-table-column
-        prop="isRead"
-        label="是否已读"
+        prop="classNoticeContent"
+        label="通知内容"
       ></el-table-column>
       <el-table-column
-        prop="messageId"
-        label="信息编号"
+        prop="classNoticeId"
+        label="通知编号"
       ></el-table-column>
       <el-table-column
-        prop="messageTitle"
-        label="信息标题"
+        prop="classNoticeTime"
+        label="发布时间"
       ></el-table-column>
       <el-table-column
         prop="className"
         label="班级名称"
       ></el-table-column>
       <el-table-column
-        prop="messageContent"
-        label="消息内容"
+        prop="classNoticeTheme"
+        label="通知主题"
       ></el-table-column>
       <el-table-column
-        prop="sendTime"
-        label="发送时间"
+        prop="classNoticeTitle"
+        label="通知标题"
       ></el-table-column>
       <el-table-column
         fixed="right"
@@ -99,12 +90,13 @@
         </template>
         <template slot-scope="scope">
           <el-button
-            v-if='scope.row.isRead===1'
+            v-if='check(scope.row.classId)'
             size="mini"
             @click="handleEdit(scope.$index, scope.row)"
-          >已读</el-button>
+          >查看</el-button>
           <!-- 显示删除按钮 -->
           <el-button
+            v-if='check(scope.row.classId)&&(roleList===3)'
             size="mini"
             type="danger"
             @click="handleConfirmDelete(scope.$index, scope.row)"
@@ -113,86 +105,26 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <div class="pagination-container" v-if="userList.length !== 0">
+      <!-- 上一页按钮 -->
+      <el-button @click="prevPage" :disabled="currentPage === 1">上一页</el-button>
+      <!-- 当前页和总页数显示 -->
+      <span>当前页：{{ currentPage }}</span>
+      <!-- 下一页按钮 -->
+      <el-button @click="nextPage" :disabled="isNextPageDisabled">下一页</el-button>
+      <!-- 输入页码跳转 -->
+      <el-input type="number" v-model="inputPage" />
+      <el-button @click="goToPage">跳转</el-button>
     </div>
 
-
-
-    <div class="pagination-container" v-if='!isSearch'>
-      发送的信息：
-    </div>
-
-    <div style="max-height: 200px; overflow: auto;">
-    <el-table
-      v-if="inlist.length > 0&&!isSearch"
-      :data="inlist"
-      border
-    >
-      <el-table-column
-        prop="sender"
-        label="发送方"
-      ></el-table-column>
-      <el-table-column
-        prop="recipient"
-        label="接收方"
-      ></el-table-column>
-      <el-table-column
-        prop="isRead"
-        label="是否已读"
-      ></el-table-column>
-      <el-table-column
-        prop="messageId"
-        label="信息编号"
-      ></el-table-column>
-      <el-table-column
-        prop="messageTitle"
-        label="信息标题"
-      ></el-table-column>
-      <el-table-column
-        prop="className"
-        label="班级名称"
-      ></el-table-column>
-      <el-table-column
-        prop="messageContent"
-        label="消息内容"
-      ></el-table-column>
-      <el-table-column
-        prop="sendTime"
-        label="发送时间"
-      ></el-table-column>
-      <el-table-column
-        fixed="right"
-      >
-        <template slot="header" slot-scope="scope">
-          <el-input
-            v-model="search"
-            size="mini"
-            placeholder="输入关键字搜索"
-          />
-        </template>
-        <template slot-scope="scope">
-          <el-button
-            v-if='scope.row.isRead===1'
-            size="mini"
-            @click="handleEdit(scope.$index, scope.row)"
-          >已读</el-button>
-          <!-- 显示删除按钮 -->
-          <el-button
-            size="mini"
-            type="danger"
-            @click="handleConfirmDelete(scope.$index, scope.row)"
-          >删除</el-button>
-
-        </template>
-      </el-table-column>
-    </el-table>
-  </div>
 
     <!-- 添加用户按钮 -->
-<!--    <el-button type="primary" @click="handleAddUser" >发送消息</el-button>-->
+    <el-button type="primary" @click="handleAddUser" v-if='(roleList!==2)'>创建班级通知</el-button>
 
     <!-- 添加用户对话框 -->
     <el-dialog
-      title="发送信息"
+      title="添加班级通知"
       :visible="addDialogVisible"
       @close="handleCloseAddDialog"
     >
@@ -200,14 +132,17 @@
         <el-form-item label="班级ID">
           <el-input v-model="newUser.classId"></el-input>
         </el-form-item>
-        <el-form-item label="接收方">
-          <el-input v-model="newUser.recipient"></el-input>
+        <el-form-item label="作者姓名">
+          <el-input v-model="newUser.classNoticeAuthor"></el-input>
         </el-form-item>
-        <el-form-item label="消息标题">
-          <el-input v-model="newUser.messageTitle"></el-input>
+        <el-form-item label="通知标题">
+          <el-input v-model="newUser.classNoticeTitle"></el-input>
         </el-form-item>
-        <el-form-item label="消息内容">
-          <el-input v-model="newUser.messageContent"></el-input>
+        <el-form-item label="通知主题">
+          <el-input v-model="newUser.classNoticeTheme"></el-input>
+        </el-form-item>
+        <el-form-item label="通知内容">
+          <el-input v-model="newUser.classNoticeContent"></el-input>
         </el-form-item>
         <!-- 其他需要添加的字段 -->
       </el-form>
@@ -240,7 +175,7 @@
             v-model="editedUser.classNoticeContent"
             type="textarea"
             :rows="4"
-            readonly
+          readonly
           ></el-input>
         </el-form-item>
         <!-- 其他需要编辑的字段 -->
@@ -255,7 +190,6 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      messageContent:'',
       userList: [], // 存储用户列表数据
       errorCode: null, // 存储错误代码
       errorMessage: null, // 存储错误消息
@@ -273,13 +207,11 @@ export default {
       myClass:false,
       userInfo:'',
       classIdToIsMemberMap:new Map(),
-      messageTitle:'',
-      recipient:'',
+      classNoticeAuthor:'',
+      classNoticeContent:'',
+      classNoticeTheme:'',
+      classNoticeTitle:'',
       day:'',
-      isRead:'',
-      inlist:[],
-      isSearch:false,
-      sender:''
     };
   },
   computed: {
@@ -288,10 +220,10 @@ export default {
     },
     // 计算属性，根据搜索关键字过滤用户列表
     filteredUserList() {
-      return this.userList;
-      // return this.userList.filter(user =>
-      //   user.classNoticeTitle.toLowerCase().includes(this.search.toLowerCase())
-      // );
+      // return this.userList;
+      return this.userList.filter(user =>
+        user.classNoticeTitle.toLowerCase().includes(this.search.toLowerCase())
+      );
     },
   },
   mounted() {
@@ -301,41 +233,28 @@ export default {
   },
   methods: {
     check(className){
-
       return this.classIdToIsMemberMap.get(className)
     },
     handleExit(){
       this.fetchUserInfoAndUserList();
-      this.recipient=this.classId=this.messageContent=this.messageTitle=this.isRead=this.sender=this.day=''
-      this.isSearch=false
     },
     async handleCheck() {
-      this.isSearch=true
-      if(this.sender===''&&this.recipient!=='')this.sender=this.userInfo
-      if(this.sender!==''&&this.recipient==='')this.recipient=this.userInfo
-      const responseInfo = await axios.post('http://localhost:8080/searchMessage', {
-        username: this.recipient,
+      const responseInfo = await axios.post('http://localhost:8080/classNotice/search', {
         classId: this.classId,
-        messageTitle: this.messageTitle,
-        messageContent: this.messageContent,
-        isRead: this.isRead,
-        sender:this.sender,
+        classNoticeAuthor: this.classNoticeAuthor,
+        classNoticeContent: this.classNoticeContent,
+        classNoticeTheme: this.classNoticeTheme,
+        classNoticeTitle: this.classNoticeTitle,
         day:this.day
       }, {
         withCredentials: true,
       });
-      console.log()
-      console.log(responseInfo)
       this.userList=responseInfo.data.info.list;
     },
-    async handleEdit(index, row) {
+    handleEdit(index, row) {
       // 处理编辑按钮点击事件
       this.editedUser = { ...row }; // 克隆用户信息，避免直接修改原始数据
-      // this.editDialogVisible = true; // 显示编辑框
-      const responseList = await axios.get('http://localhost:8080/updateMessage/' + row.messageId, {
-        withCredentials: true,
-      });
-      await this.fetchUserInfoAndUserList()
+      this.editDialogVisible = true; // 显示编辑框
     },
     handleCloseEditDialog() {
       // 关闭编辑框时重置编辑状态
@@ -353,32 +272,31 @@ export default {
         this.roleList=responseInfo.data.info.userPermission.roleId;
 
         // 发送 GET 请求获取用户列表数据
-        const responseList = await axios.get('http://localhost:8080/message/listInbox/'+this.userInfo, {
+        const responseList = await axios.get('http://localhost:8080/classNotice/list', {
           params: {
             pageNum: this.currentPage,
           },
           withCredentials: true,
         });
 
-        const responseList1 = await axios.get('http://localhost:8080/message/listOutbox/'+this.userInfo, {
-          params: {
-            pageNum: this.currentPage,
-          },
-          withCredentials: true,
-        });
-
-        if(responseList1.data.code==='100'){
-          this.inlist=responseList1.data.info.list;
-        }else {
-          // 权限不足或其他错误情况
-          this.errorCode = responseList1.data.code;
-          this.errorMessage = responseList1.data.msg;
-        }
+        console.log(responseList);
 
         // 根据返回的数据判断不同的情况
         if (responseList.data.code === '100') {
           // 用户列表获取成功
           this.userList = responseList.data.info.list;
+          const myMap=new Map();
+          for (const classInfo of this.userList) {
+            const responseInfo1 = await axios.post('http://localhost:8080/class/isMember', {
+              userId: parseInt(this.userInfo),
+              classId: parseInt(classInfo.classId)
+            }, {
+              withCredentials: true,
+            });
+            // 将classId和对应的isMember状态存入Map
+            myMap.set(classInfo.classId, "success" === responseInfo1.data.info.result);
+          }
+          this.classIdToIsMemberMap=myMap;
           // this.currentPage=1;
           console.log(responseList);
         } else {
@@ -469,7 +387,7 @@ export default {
     },
     handleConfirmDelete(index, row) {
       // 弹出确认框
-      this.$confirm('确定删除该消息吗？', '提示', {
+      this.$confirm('确定删除该班级通知吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
@@ -510,7 +428,7 @@ export default {
     async confirmDelete(index, row) {
       try {
         // 发送请求删除用户信息
-        const response = await axios.get('http://localhost:8080/deleteMessage/'+row.messageId, {
+        const response = await axios.get('http://localhost:8080/classNotice/delete/'+row.classNoticeId, {
           withCredentials: true,
         });
         if (response.data.code === '100') {
@@ -544,8 +462,7 @@ export default {
       // 发送请求保存新添加的用户信息
       console.log(this.newUser)
       try{
-        this.newUser.sender=this.userInfo
-        const response = await axios.post('http://localhost:8080/sendMessage', this.newUser,
+        const response = await axios.post('http://localhost:8080/classNotice/addClassNotice', this.newUser,
           {
             withCredentials: true,
           }
@@ -553,14 +470,14 @@ export default {
         console.log(response)
         // 处理注册成功的情况
         if (response.data.code === '100' && response.data.info.result === 'success') {
-          alert("发送信息成功");
+          alert("添加班级通知成功");
         } else {
           // 处理注册失败的情况
-          alert('发送信息失败，请检查输入信息');
+          alert('添加班级通知失败，请检查输入信息');
         }
       } catch (error) {
-        console.error('发送信息失败:', error);
-        alert('发送信息，请稍后重试');
+        console.error('添加用户失败:', error);
+        alert('添加用户失败，请稍后重试');
       }
       // 成功后关闭添加用户对话框，并刷新用户列表等操作
       await this.fetchUserInfoAndUserList();
